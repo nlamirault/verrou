@@ -16,19 +16,14 @@ package i3lock
 
 import (
 	"os/exec"
-
-	"github.com/nlamirault/verrou/screen"
 )
 
 const (
 	ScreenLocker = "i3lock"
 )
 
-func LockScreen(path string) error {
-	if err := screen.GenerateImage(path); err != nil {
-		return err
-	}
-	if err := exec.Command("i3lock", "-n", "-i"+path).Run(); err != nil {
+func LockScreen(filename string) error {
+	if err := exec.Command("i3lock", "-n", "-i"+filename).Run(); err != nil {
 		return err
 	}
 	return nil

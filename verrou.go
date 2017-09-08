@@ -21,6 +21,7 @@ import (
 
 	"github.com/nlamirault/verrou/i3lock"
 	"github.com/nlamirault/verrou/screen"
+	// "github.com/nlamirault/verrou/verroulock"
 )
 
 const (
@@ -28,23 +29,24 @@ const (
 	BANNER = "Verrou"
 	// VERSION is the binary version.
 	VERSION = "0.2.0"
-
-	background = "/tmp/verrou.png"
 )
 
 var (
 	// Flags
-	dryrun bool
-	vrs    bool
-	use    string
+	dryrun  bool
+	vrs     bool
+	backend string
+	image   string
+
+	background = "/tmp/verrou.png"
 )
 
 func init() {
 	// parse flags
 	flag.BoolVar(&vrs, "version", false, "print version and exit")
-	flag.BoolVar(&dryrun, "dry-run", false, "Create background image and not lock screen")
-	flag.StringVar(&use, "use", "", "Which screen locker to use")
-
+	flag.BoolVar(&dryrun, "dry-run", false, "Create background image and do not lock screen")
+	flag.StringVar(&backend, "backend", "", "Which screen locker to use")
+	flag.StringVar(&image, "image", "", "Image to use")
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, fmt.Sprintf("%s - v%s\n", BANNER, VERSION))
 		flag.PrintDefaults()
@@ -57,9 +59,6 @@ func init() {
 		os.Exit(0)
 	}
 
-	if dryrun {
-
-	}
 }
 
 func main() {
@@ -71,12 +70,28 @@ func main() {
 		return
 	}
 
-	switch use {
+	if len(image) > 0 {
+		if _, err := os.Stat(image); os.IsNotExist(err) {
+			fmt.Printf("Image not found: %s\n", image)
+			os.Exit(1)
+		}
+		background = image
+	} else {
+		if err := screen.GenerateImage(background); err != nil {
+			panic(err)
+		}
+	}
+
+	switch backend {
 	case i3lock.ScreenLocker:
 		if err := i3lock.LockScreen(background); err != nil {
 			panic(err)
 		}
+	// case verroulock.ScreenLocker:
+	// 	if err := verroulock.LockScreen(background); err != nil {
+	// 		panic(err)
+	// 	}
 	default:
-		fmt.Printf("%s is not a supported screen locker.\n", use)
+		fmt.Printf("%s is not a supported screen locker.\n", backend)
 	}
 }
