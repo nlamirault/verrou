@@ -28,7 +28,7 @@ DOCKER = docker
 
 GO = go
 
-GOX = gox -os="linux freebsd openbsd netbsd"
+GOX = gox -os="linux"
 GOX_ARGS = "-output={{.Dir}}-$(VERSION)_{{.OS}}_{{.Arch}}"
 
 BINTRAY_URI = https://api.bintray.com
