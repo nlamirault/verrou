@@ -17,21 +17,18 @@ package main
 import (
 	"flag"
 	"fmt"
-	"image"
 	"os"
-	"os/exec"
 
-	"github.com/disintegration/imaging"
-	"github.com/vova616/screenshot"
+	"github.com/nlamirault/verrou/i3lock"
+	"github.com/nlamirault/verrou/screen"
 )
 
 const (
 	// BANNER is what is printed for help/info output.
 	BANNER = "Verrou"
 	// VERSION is the binary version.
-	VERSION = "0.1.0"
+	VERSION = "0.2.0"
 
-	blurSigma  = 5.0
 	background = "/tmp/verrou.png"
 )
 
@@ -39,12 +36,14 @@ var (
 	// Flags
 	dryrun bool
 	vrs    bool
+	use    string
 )
 
 func init() {
 	// parse flags
 	flag.BoolVar(&vrs, "version", false, "print version and exit")
 	flag.BoolVar(&dryrun, "dry-run", false, "Create background image and not lock screen")
+	flag.StringVar(&use, "use", "", "Which screen locker to use")
 
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, fmt.Sprintf("%s - v%s\n", BANNER, VERSION))
@@ -57,31 +56,27 @@ func init() {
 		fmt.Printf("v%s\n", VERSION)
 		os.Exit(0)
 	}
-}
 
-func lockScreen(path string) {
-	if err := exec.Command("i3lock", "-n", "-i"+path).Run(); err != nil {
-		panic(err)
+	if dryrun {
+
 	}
-}
-
-func makeScreenshot() (*image.RGBA, error) {
-	return screenshot.CaptureScreen()
 }
 
 func main() {
-	screenshot, err := makeScreenshot()
-	if err != nil {
-		panic(err)
+	if dryrun {
+		if err := screen.GenerateImage(background); err != nil {
+			panic(err)
+		}
+		fmt.Printf("See screen lock image: %s\n", background)
+		return
 	}
 
-	blurredImage := imaging.Blur(screenshot, blurSigma)
-	err = imaging.Save(blurredImage, background)
-	if err != nil {
-		panic(err)
-	}
-
-	if !dryrun {
-		lockScreen(background)
+	switch use {
+	case i3lock.ScreenLocker:
+		if err := i3lock.LockScreen(background); err != nil {
+			panic(err)
+		}
+	default:
+		fmt.Printf("%s is not a supported screen locker.\n", use)
 	}
 }
